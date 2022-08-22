@@ -1,6 +1,6 @@
 from flask import Flask, request
 import sqlite3
-
+from datetime import datetime
 app = Flask(__name__)
 
 
@@ -13,19 +13,13 @@ def dict_factory(cursor, row):
 
 def get_database(querry):
     conn = sqlite3.connect('db1.db')
-    conn.row_factory = dict_factory
+    #conn.row_factory = dict_factory
     cursor = conn.execute(querry)
     result = cursor.fetchall()
     conn.commit()
     conn.close()
     return result
 
-
-def write_to_database(querry):
-    with sqlite3.connect('db1.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute(querry)
-        conn.commit()
 
 
 @app.route("/", methods=['GET'])  # Основная страница обменника
@@ -97,7 +91,7 @@ def add_currency_rating(currency_name):
     request_data = request.get_json()
     comment = request_data['comment']
     rating = request_data['rating']
-    write_to_database(f"""Insert into Rating(cur_name, rating, comment) VALUES (
+    get_database(f"""Insert into Rating(cur_name, rating, comment) VALUES (
     '{currency_name}', {rating}, '{comment}')""")
     return 'ok'
 
@@ -105,17 +99,19 @@ def add_currency_rating(currency_name):
 @app.post('/currency/trade/<currency_name1>/<currency_name2>')
 def send_trade(currency_name1, currency_name2):
     user_id = 1
-    amount1 = request.get_json()['amount']
+    date = datetime.now().strftime('%d.%m.%Y: %X')
+    amount1 = request.get_json()["amount"]
+
     user_balance2 = get_database(f"""SELECT balance from Account where
     user_id ='{user_id}' and currency_id = '{currency_name2}'""")
     user_balance = get_database(f"""SELECT balance from Account where
         user_id ='{user_id}' and currency_id = '{currency_name1}'""")
-    act_currency1 = get_database(f"""SELECT * from Currency where name=
-      '{currency_name1}' ORDER by date DESC limit 1'""")
-    cur1_cost_to_one_usd = act_currency1[0]['value_to_usd']
 
+    act_currency1 = get_database(f"""SELECT * from Currency where name=
+      '{currency_name1}' ORDER by date DESC limit 1""")
+    cur1_cost_to_one_usd = act_currency1[0]['value_to_usd']
     act_currency2 = get_database(f"""SELECT * from Currency where name=
-    '{currency_name2}' ORDER by date DESC limit 1'""")
+    '{currency_name2}' ORDER by date DESC limit 1""")
     cur2_cost_to_one_usd = act_currency2[0]['value_to_usd']
 
     need_cur2 = amount1 * 1.0 * cur1_cost_to_one_usd / cur2_cost_to_one_usd
@@ -123,7 +119,7 @@ def send_trade(currency_name1, currency_name2):
     exists_amount_currency2 = act_currency2[0]['available_quantity']
 
     if (user_balance[0]['balance'] >= amount1) and (exists_amount_currency2 >
-            need_cur2):
+                                                    need_cur2):
         get_database(f"update Currency set available_quantity = "
                      f"{exists_amount_currency2 - need_cur2} where date"
                      f"={act_currency2[0]['date']} and name ='{currency_name2}'")
@@ -139,7 +135,13 @@ def send_trade(currency_name1, currency_name2):
                      f"{user_balance2[0]['balance']+need_cur2} where user_id ="
                      f"{user_id} "
                      f"and name = '{currency_name2}'")
-        get_database(f"""Insert into Trannsaction () Values ()""")
+        get_database(f"""Insert into Trannsaction (user_id, type_transaction,
+         amount_spent_cur, amount_received_cur, currency_transaction_in,
+          currency_transaction_from, date_time, commission,
+           balance_transaction_in, balance_transaction_from) Values (
+{user_id}, 'exchange', {amount1}, {need_cur2}, {currency_name2}, 
+{currency_name1}, {date}, 0, {user_balance[0]['id']}, 
+{user_balance2[0]['id']})""")
         return 'successful operation'
     else:
         return 'Error. Something went wrong'
