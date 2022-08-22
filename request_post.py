@@ -14,10 +14,7 @@ def post_rating():
 def post_trade():
     URL = 'http://127.0.0.1:5000/currency/trade/Usd/Eur'
     HEADERS = {'content-type': 'application/json'}
-    data = {'data':
-                {},
-            'result': 'ok'
-            }
+    data ={}
     request_data = requests.post(URL, headers=HEADERS, json=data)
     print(request_data.text)
 
