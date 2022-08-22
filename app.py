@@ -102,9 +102,9 @@ def send_trade(currency_name1, currency_name2):
     date = datetime.now().strftime('%d.%m.%Y: %X')
     amount1 = request.get_json()["amount"]
 
-    user_balance2 = get_database(f"""SELECT balance from Account where
+    user_balance2 = get_database(f"""SELECT * from Account where
     user_id ='{user_id}' and currency_id = '{currency_name2}'""")
-    user_balance = get_database(f"""SELECT balance from Account where
+    user_balance = get_database(f"""SELECT * from Account where
         user_id ='{user_id}' and currency_id = '{currency_name1}'""")
 
     act_currency1 = get_database(f"""SELECT * from Currency where name=
