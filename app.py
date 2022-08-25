@@ -1,6 +1,6 @@
 from flask import Flask, request
 import sqlite3
-from datetime import datetime
+#from datetime import datetime
 app = Flask(__name__)
 
 
@@ -97,7 +97,7 @@ def add_currency_rating(currency_name):
 @app.post('/currency/trade/<currency_name1>/<currency_name2>')
 def send_trade(currency_name1, currency_name2):
     user_id = 1
-    date = datetime.now().strftime('%d.%m.%Y: %X')
+    date = "11-10-2022"
     amount1 = request.get_json()["amount"]
 
     user_balance1 = get_database(f"""SELECT * from Account where
@@ -143,6 +143,7 @@ def send_trade(currency_name1, currency_name2):
         return 'successful operation'
     else:
         return 'Error. Something went wrong'
+
 
 if __name__ == '__main__':
     app.run(debug=True)
