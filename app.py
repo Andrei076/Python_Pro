@@ -137,8 +137,8 @@ def send_trade(currency_name1, currency_name2):
          amount_spent_cur, amount_received_cur, currency_transaction_in,
           currency_transaction_from, date_time, commission,
            balance_transaction_in, balance_transaction_from) Values (
-{user_id}, 'exchange', {amount1}, {need_cur2}, {currency_name2}, 
-{currency_name1}, {date}, 0, {user_balance1[0]['id']}, 
+'{user_id}', 'exchange', '{amount1}', {need_cur2}, '{currency_name2}', 
+'{currency_name1}', '{date}', 0, {user_balance1[0]['id']}, 
 {user_balance2[0]['id']})""")
         return 'successful operation'
     else:
