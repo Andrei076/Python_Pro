@@ -12,14 +12,12 @@ def dict_factory(cursor, row):
 
 
 def get_database(querry):
-    conn = sqlite3.connect('db1.db')
-    #conn.row_factory = dict_factory
-    cursor = conn.execute(querry)
-    result = cursor.fetchall()
-    conn.commit()
-    conn.close()
-    return result
-
+    with sqlite3.connect('db1.db') as conn:
+        conn.row_factory = dict_factory
+        cursor = conn.execute(querry)
+        result = cursor.fetchall()
+        conn.commit()
+        return result
 
 
 @app.route("/", methods=['GET'])  # Основная страница обменника
@@ -102,10 +100,10 @@ def send_trade(currency_name1, currency_name2):
     date = datetime.now().strftime('%d.%m.%Y: %X')
     amount1 = request.get_json()["amount"]
 
+    user_balance1 = get_database(f"""SELECT * from Account where
+        user_id ='{user_id}' and name = '{currency_name1}'""")
     user_balance2 = get_database(f"""SELECT * from Account where
-    user_id ='{user_id}' and currency_id = '{currency_name2}'""")
-    user_balance = get_database(f"""SELECT * from Account where
-        user_id ='{user_id}' and currency_id = '{currency_name1}'""")
+    user_id ='{user_id}' and name = '{currency_name2}'""")
 
     act_currency1 = get_database(f"""SELECT * from Currency where name=
       '{currency_name1}' ORDER by date DESC limit 1""")
@@ -118,7 +116,7 @@ def send_trade(currency_name1, currency_name2):
 
     exists_amount_currency2 = act_currency2[0]['available_quantity']
 
-    if (user_balance[0]['balance'] >= amount1) and (exists_amount_currency2 >
+    if  (user_balance1[0]['balance'] >= amount1) and (exists_amount_currency2 >
                                                     need_cur2):
         get_database(f"update Currency set available_quantity = "
                      f"{exists_amount_currency2 - need_cur2} where date"
@@ -128,7 +126,7 @@ def send_trade(currency_name1, currency_name2):
                      f"where date ="
                      f" {act_currency2[0]['date']} and name = '{currency_name1}'")
         get_database(f"update Account set balance = "
-                     f"{user_balance[0]['balance']-amount1} where user_id "
+                     f"{user_balance1[0]['balance']-amount1} where user_id "
                      f"={user_id} "
                      f"and name = '{currency_name1}'")
         get_database(f"update Account set balance = "
@@ -140,7 +138,7 @@ def send_trade(currency_name1, currency_name2):
           currency_transaction_from, date_time, commission,
            balance_transaction_in, balance_transaction_from) Values (
 {user_id}, 'exchange', {amount1}, {need_cur2}, {currency_name2}, 
-{currency_name1}, {date}, 0, {user_balance[0]['id']}, 
+{currency_name1}, {date}, 0, {user_balance1[0]['id']}, 
 {user_balance2[0]['id']})""")
         return 'successful operation'
     else:
