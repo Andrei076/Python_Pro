@@ -1,6 +1,6 @@
 from flask import Flask, request
 import sqlite3
-from models import db,  Currency, Account, Rating,  Trannsaction, User
+from models import db, Currency, Account, Rating, Trannsaction
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db1.db'
@@ -79,7 +79,7 @@ def show_trade(currency_name1, currency_name2):
         Currency.date.desc()).first()
     second_cur = Currency.query.filter_by(name=currency_name2).order_by(
         Currency.date.desc()).first()
-    rez = round(first_cur.value_to_usd / second_cur.value_to_usd,2)
+    rez = round(first_cur.value_to_usd / second_cur.value_to_usd, 2)
     return f'{currency_name1} exchange to {currency_name2} = {rez}'
 
 
@@ -116,58 +116,82 @@ def add_currency_rating(currency_name):
     # '{currency_name}', {rating}, '{comment}')""")
 
 
-
-
-
-
-
-
 @app.post('/currency/trade/<currency_name1>/<currency_name2>')
 def send_trade(currency_name1, currency_name2):
     user_id = 1
     date = "11-10-2022"
     amount1 = request.get_json()["amount"]
 
-    user_balance1 = get_database(f"""SELECT * from Account where
-        user_id ='{user_id}' and name = '{currency_name1}'""")
-    user_balance2 = get_database(f"""SELECT * from Account where
-    user_id ='{user_id}' and name = '{currency_name2}'""")
+    # user_balance1 = get_database(f"""SELECT * from Account where
+    #     user_id ='{user_id}' and name = '{currency_name1}'""")
+    # user_balance2 = get_database(f"""SELECT * from Account where
+    # user_id ='{user_id}' and name = '{currency_name2}'""")
 
-    act_currency1 = get_database(f"""SELECT * from Currency where name=
-      '{currency_name1}' ORDER by date DESC limit 1""")
-    cur1_cost_to_one_usd = act_currency1[0]['value_to_usd']
-    act_currency2 = get_database(f"""SELECT * from Currency where name=
-    '{currency_name2}' ORDER by date DESC limit 1""")
-    cur2_cost_to_one_usd = act_currency2[0]['value_to_usd']
+    user_balance1 = Account.query.filter_by(user_id=user_id,
+                                            name=currency_name1).first()
+    user_balance2 = Account.query.filter_by(user_id=user_id,
+                                            name=currency_name2).first()
+
+    # act_currency1 = get_database(f"""SELECT * from Currency where name=
+    #   '{currency_name1}' ORDER by date DESC limit 1""")
+    act_currency1 = Currency.query.filter_by(name=currency_name1).order_by(
+        Currency.date.desc()).first()
+    cur1_cost_to_one_usd = act_currency1.value_to_usd
+    # act_currency2 = get_database(f"""SELECT * from Currency where name=
+    # '{currency_name2}' ORDER by date DESC limit 1""")
+    act_currency2 = Currency.query.filter_by(name=currency_name2).order_by(
+        Currency.date.desc()).first()
+    cur2_cost_to_one_usd = act_currency2.value_to_usd
 
     need_cur2 = amount1 * 1.0 * cur1_cost_to_one_usd / cur2_cost_to_one_usd
 
-    exists_amount_currency2 = act_currency2[0]['available_quantity']
+    exists_amount_currency2 = act_currency2.available_quantity
 
-    if  (user_balance1[0]['balance'] >= amount1) and (exists_amount_currency2 >
-                                                    need_cur2):
-        get_database(f"update Currency set available_quantity = "
-                     f"{exists_amount_currency2 - need_cur2} where date"
-                     f"={act_currency2[0]['date']} and name ='{currency_name2}'")
-        get_database(f"update Currency set available_quantity = "
-                     f"{act_currency1[0]['available_quantity'] + amount1} "
-                     f"where date ="
-                     f" {act_currency2[0]['date']} and name = '{currency_name1}'")
-        get_database(f"update Account set balance = "
-                     f"{user_balance1[0]['balance']-amount1} where user_id "
-                     f"={user_id} "
-                     f"and name = '{currency_name1}'")
-        get_database(f"update Account set balance = "
-                     f"{user_balance2[0]['balance']+need_cur2} where user_id ="
-                     f"{user_id} "
-                     f"and name = '{currency_name2}'")
-        get_database(f"""Insert into Trannsaction (user_id, type_transaction,
-         amount_spent_cur, amount_received_cur, currency_transaction_in,
-          currency_transaction_from, date_time, commission,
-           balance_transaction_in, balance_transaction_from) Values (
-'{user_id}', 'exchange', '{amount1}', {need_cur2}, '{currency_name2}', 
-'{currency_name1}', '{date}', 0, {user_balance1[0]['id']}, 
-{user_balance2[0]['id']})""")
+    if (user_balance1.balance >= amount1) and (exists_amount_currency2 >
+                                               need_cur2):
+        # get_database(f"update Currency set available_quantity = "
+        #              f"{exists_amount_currency2 - need_cur2} where date"
+        #          f"={act_currency2[0]['date']} and name ='{currency_name2}'")
+        Currency.query.filter_by(name=currency_name2,
+                                 date=act_currency1.date).update(
+            dict(available_quantity=(exists_amount_currency2 - need_cur2)))
+        # get_database(f"update Currency set available_quantity = "
+        #              f"{act_currency1[0]['available_quantity'] + amount1} "
+        #              f"where date ="
+        #        f" {act_currency2[0]['date']} and name = '{currency_name1}'")
+        Currency.query.filter_by(name=currency_name1,
+                                 date=act_currency2.date).update(
+            dict(available_quantity=(act_currency1.available_quantity +
+                                     amount1)))
+        # get_database(f"update Account set balance = "
+        #              f"{user_balance1[0]['balance']-amount1} where user_id "
+        #              f"={user_id} "
+        #              f"and name = '{currency_name1}'")
+        Account.query.filter_by(user_id=user_id, name=currency_name1).update(
+            dict(balance=(user_balance1.balance - amount1)))
+        # get_database(f"update Account set balance = "
+        #             f"{user_balance2[0]['balance']+need_cur2} where user_id ="
+        #              f"{user_id} "
+        #              f"and name = '{currency_name2}'")
+        Account.query.filter_by(user_id=user_id, name=currency_name2).update(
+            dict(balance=(user_balance2.balance + need_cur2)))
+        #  get_database(f"""Insert into Trannsaction (user_id, type_transaction,
+        #       amount_spent_cur, amount_received_cur, currency_transaction_in,
+        #           currency_transaction_from, date_time, commission,
+        #            balance_transaction_in, balance_transaction_from) Values (
+        # '{user_id}', 'exchange', '{amount1}', {need_cur2}, '{currency_name2}',
+        # '{currency_name1}', '{date}', 0, {user_balance1[0]['id']},
+        # {user_balance2[0]['id']})""")
+        obj = Trannsaction(user_id=user_id, type_transaction='exchange',
+                           amount_spent_cur=amount1,
+                           amount_received_cur=need_cur2,
+                           currency_transaction_from=currency_name1,
+                           currency_transaction_in=currency_name2,
+                           date_time=date, commission=0,
+                           balance_transaction_in=user_balance1.id,
+                           balance_transaction_from=user_balance2.id)
+        db.session.add(obj)
+        db.session.commit()
         return 'successful operation'
     else:
         return 'Error. Something went wrong'
@@ -175,7 +199,6 @@ def send_trade(currency_name1, currency_name2):
 
 if __name__ == '__main__':
     app.run(debug=True)
-
 
 # @app.get('/user/deposit/<deposit_id>')
 # def user_deposit_id(deposit_id):
