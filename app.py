@@ -108,9 +108,18 @@ def add_currency_rating(currency_name):
     request_data = request.get_json()
     comment = request_data['comment']
     rating = request_data['rating']
-    get_database(f"""Insert into Rating(cur_name, rating, comment) VALUES (
-    '{currency_name}', {rating}, '{comment}')""")
+    obj = Rating(cur_name=currency_name, rating=rating, comment=comment)
+    db.session.add(obj)
+    db.session.commit()
     return 'ok'
+    # get_database(f"""Insert into Rating(cur_name, rating, comment) VALUES (
+    # '{currency_name}', {rating}, '{comment}')""")
+
+
+
+
+
+
 
 
 @app.post('/currency/trade/<currency_name1>/<currency_name2>')

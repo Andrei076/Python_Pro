@@ -19,4 +19,4 @@ def post_trade():
 
 
 if __name__ == "__main__":
-    post_trade()
+    post_rating()
