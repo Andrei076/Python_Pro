@@ -1,5 +1,4 @@
 from flask import Flask, request
-import datetime
 import sqlite3
 from models import db,  Currency, Account, Rating,  Trannsaction, User
 
@@ -76,7 +75,13 @@ def show_trade(currency_name1, currency_name2):
     # Where name='{currency_name2}' ORDER by date DESC limit 1),
     # 2) as value_exchange""")
     # return rez
-    date_now = datetime.datetime.now().strftime('%d.%m.%Y')
+    first_cur = Currency.query.filter_by(name=currency_name1).order_by(
+        Currency.date.desc()).first()
+    second_cur = Currency.query.filter_by(name=currency_name2).order_by(
+        Currency.date.desc()).first()
+    rez = round(first_cur.value_to_usd / second_cur.value_to_usd,2)
+    return f'{currency_name1} exchange to {currency_name2} = {rez}'
+
 
 @app.get('/user')  # Вывод баланса пользователя
 def user_balancee():
