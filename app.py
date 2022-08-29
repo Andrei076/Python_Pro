@@ -1,7 +1,12 @@
 from flask import Flask, request
+import datetime
 import sqlite3
-#from datetime import datetime
+from models import db,  Currency, Account, Rating,  Trannsaction, User
+
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db1.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db.init_app(app)
 
 
 def dict_factory(cursor, row):
@@ -27,45 +32,51 @@ def hello():
 
 @app.get('/currency')  # Вывод всех валют
 def list_of_currency():
-    rez = get_database('select name, available_quantity, value_to_usd,'
-                       ' date from Currency ')
-    return rez
+    # rez = get_database('select name, available_quantity, value_to_usd,'
+    #                    ' date from Currency ')
+    # return rez
+    list_currency = Currency.query.all()
+    return [item.to_dict() for item in list_currency]
 
 
 @app.get('/currency/<currency_name>')  # Вывод выбранной валюты
 def name_of_currency(currency_name):
-    rez = get_database(f'select name, available_quantity, value_to_usd, date '
-                       f'from Currency where name="{currency_name}"')
-    return rez
+    # rez = get_database(f'select name, available_quantity, value_to_usd, date '
+    #                    f'from Currency where name="{currency_name}"')
+    # return rez
+    result = Currency.query.filter_by(name=currency_name).all()
+    return [itm.to_dict() for itm in result]
 
 
-@app.get('/currency/<currency_name>/rating')  # Вывод рейтинга выбранной валюты
+@app.get('/currency/<currency_name>/rating')  # Вывод среднего рейтинга
+# выбранной валюты
 def ratings(currency_name):
-    rez = get_database(f"""select cur_name, round(avg(rating),1) as rating, 
-    comment from 
-    Rating where cur_name='{currency_name}' """)
-    return rez
+    # rez = get_database(f"""select cur_name, round(avg(rating),1) as rating
+    #  from
+    # Rating where cur_name='{currency_name}' """)
+    # return rez
+    cur_rating = dict(db.session.query(db.func.avg(Rating.rating).label(
+        f'average rating {currency_name}')).filter(Rating.cur_name ==
+                                                   currency_name).first())
+    return cur_rating
 
 
-@app.get('/currency/rating')  # Вывод рейтинга всех валют
+@app.get('/currency/review')  # Вывод рейтинга всех валют
 def rating_all():
-    rez = get_database(f'select cur_name, round(avg(rating),1) as rating, '
-                       f'comment from '
-                       f'Rating '
-                       f'Group by cur_name')
-    return rez
+    review_all_currencies = Rating.query.all()
+    return [item.to_dict() for item in review_all_currencies]
 
 
 # Вывод курса валюты относильно другой валюты
 @app.get('/currency/trade/<currency_name1>/<currency_name2>')
 def show_trade(currency_name1, currency_name2):
-    rez = get_database(f"""select round((select value_to_usd from Currency 
-    Where name='{currency_name1}' ORDER by date DESC limit 1)/ 
-    (select value_to_usd from Currency 
-    Where name='{currency_name2}' ORDER by date DESC limit 1),
-    2) as value_exchange""")
-    return rez
-
+    # rez = get_database(f"""select round((select value_to_usd from Currency
+    # Where name='{currency_name1}' ORDER by date DESC limit 1)/
+    # (select value_to_usd from Currency
+    # Where name='{currency_name2}' ORDER by date DESC limit 1),
+    # 2) as value_exchange""")
+    # return rez
+    date_now = datetime.datetime.now().strftime('%d.%m.%Y')
 
 @app.get('/user')  # Вывод баланса пользователя
 def user_balancee():
