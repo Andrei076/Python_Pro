@@ -9,7 +9,7 @@ class Account(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True,
                    nullable=False, unique=True)
     user_id = db.Column(db.Integer, nullable=False)
-    balance = db.Column(db.Numeric, nullable=False)
+    balance = db.Column(db.REAL, nullable=False)
     name = db.Column(db.String(20), nullable=False)
 
     def to_dict(self):
@@ -66,12 +66,12 @@ class Trannsaction(db.Model):
                    autoincrement=True)
     user_id = db.Column(db.Integer, nullable=False)
     type_transaction = db.Column(db.String(30), nullable=False)
-    amount_spent_cur = db.Column(db.Numeric, nullable=False)
-    amount_received_cur = db.Column(db.Numeric, nullable=False)
+    amount_spent_cur = db.Column(db.REAL, nullable=False)
+    amount_received_cur = db.Column(db.REAL, nullable=False)
     currency_transaction_in = db.Column(db.String(30), nullable=False)
     currency_transaction_from = db.Column(db.String(30), nullable=False)
-    data_time = db.Column(db.String(30), nullable=False)
-    commission = db.Column(db.Numeric, nullable=False)
+    date_time = db.Column(db.String(30), nullable=False)
+    commission = db.Column(db.REAL, nullable=False)
     balance_transaction_in = db.Column(db.String, nullable=False)
     balance_transaction_from = db.Column(db.String, nullable=False)
 
@@ -84,7 +84,7 @@ class Trannsaction(db.Model):
             'amount_received_cur': self.amount_received_cur,
             'currency_transaction_in': self.currency_transaction_in,
             'currency_transaction_from': self.currency_transaction_from,
-            'data_time': self.data_time,
+            'date_time': self.date_time,
             'commission': self.commission,
             'balance_transaction_in': self.balance_transaction_in,
             'balance_transaction_from': self.balance_transaction_from

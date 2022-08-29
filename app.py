@@ -44,7 +44,7 @@ def name_of_currency(currency_name):
     #                    f'from Currency where name="{currency_name}"')
     # return rez
     result = Currency.query.filter_by(name=currency_name).all()
-    return [itm.to_dict() for itm in result]
+    return [item.to_dict() for item in result]
 
 
 @app.get('/currency/<currency_name>/rating')  # Вывод среднего рейтинга
@@ -85,19 +85,22 @@ def show_trade(currency_name1, currency_name2):
 
 @app.get('/user')  # Вывод баланса пользователя
 def user_balancee():
-    rez = get_database(f'''Select Currency.name, Account.balance from Account
-     JOIN Currency on Currency.id=Account.currency_id WHERE
-      Account.user_id=1''')
-    return rez
+    # rez = get_database(f'''Select balance, name FROM Account WHERE
+    # user_id = 1''')
+    # return rez
+    balances = Account.query.filter_by(user_id=1)
+    return [item.to_dict() for item in balances]
 
 
 @app.get('/user/<user_id>/history')  # Вывод истории транзакций пользователя
 def user_history(user_id):
-    rez = get_database(f'''Select currency_transaction_in, 
-    currency_transaction_from, amount_spent_cur,
-     amount_received_cur, date_time, commission from Trannsaction where 
-     user_id='{user_id}' ''')
-    return rez
+    # rez = get_database(f'''Select currency_transaction_in,
+    # currency_transaction_from, amount_spent_cur,
+    #  amount_received_cur, date_time, commission from Trannsaction where
+    #  user_id='{user_id}' ''')
+    # return rez
+    history_tran = Trannsaction.query.filter_by(user_id=user_id).all()
+    return [item.to_dict() for item in history_tran]
 
 
 @app.post('/currency/<currency_name>/rating')
