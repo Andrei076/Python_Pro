@@ -198,7 +198,7 @@ def send_trade(currency_name1, currency_name2):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True)
 
 # @app.get('/user/deposit/<deposit_id>')
 # def user_deposit_id(deposit_id):
