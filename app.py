@@ -1,11 +1,15 @@
 from flask import Flask, request
 import sqlite3
+import os
+from flask_migrate import Migrate
 from models import db, Currency, Account, Rating, Trannsaction
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db1.db'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db1.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DB_CONNECTION_STR')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
+migrate = Migrate(app, db)
 
 
 def dict_factory(cursor, row):
