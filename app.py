@@ -1,17 +1,14 @@
-from flask import Flask, request
+from flask import Flask, request, session
 import sqlite3
 import sqlalchemy
-import celery_worker
-import database
 import uuid
 import models
-from models import Currency, Account, Rating, Trannsaction
+from models import Currency, Rating, Trannsaction
 from celery_worker import task1
 import database
 
 app = Flask(__name__)
-
-
+app.secret_key = 'Seccret_key'
 
 
 def dict_factory(cursor, row):
@@ -79,18 +76,61 @@ def show_trade(currency_name1, currency_name2):
     return f'{currency_name1} exchange to {currency_name2} = {rez}'
 
 
-@app.get('/user')  # Вывод баланса пользователя
-def user_balancee():
+@app.route('/user', methods=['GET', 'POST'])
+def user_info():
     database.init_db()
-    balances = Account.query.filter_by(user_id=1)
-    return [item.to_dict() for item in balances]
+    if request.method == 'GET':
+        user_name = session.get('user_name')
+        if user_name is None:
+            return '''
+            <html>
+            <form method="post">
+  <div class="container">
+    <label for="uname"><b>Username</b></label>
+    <input type="text" placeholder="Enter Username" name="uname" required>
+    
+    <label for="psw"><b>Password</b></label>
+    <input type="password" placeholder="Enter Password" name="psw" required>
+    
+    <button type="submit">Login</button>
+  </div>
+</form>
+            </html>
+            '''
+        else:
+            user_info = models.Account.query.filter_by(user_id=user_name).all()
+            if len(user_info) == 0:
+                return 'No user'
+            return [item.to_dict() for item in user_info]
+    if request.method == 'POST':
+        user_login = request.form.get('uname')
+        user_password = request.form.get('psw')
+        user_info_creds = models.User.query.filter_by(login=user_login,
+                                                      password=user_password
+                                                      ).first()
+        if user_info_creds:
+            session['user_name'] = user_login
+            return 'Ok'
+        else:
+            return 'Error'
 
 
-@app.get('/user/<user_id>/history')  # Вывод истории транзакций пользователя
-def user_history(user_id):
-    database.init_db()
-    history_tran = Trannsaction.query.filter_by(user_id=user_id).all()
-    return [item.to_dict() for item in history_tran]
+# @app.get('/user/<user_id>/history')  # Вывод истории транзакций пользователя
+# def user_history(user_id):
+#     database.init_db()
+#     history_tran = Trannsaction.query.filter_by(user_id=user_id).all()
+#     return [item.to_dict() for item in history_tran]
+
+@app.get('/user/history')  # Вывод истории транзакций пользователя
+def user_history():
+    user_id = session.get('user_name')
+
+    if session.get('user_name') is not None:
+        database.init_db()
+        history_tran = Trannsaction.query.filter_by(user_id=user_id).all()
+        return [item.to_dict() for item in history_tran]
+    else:
+        return 'Error'
 
 
 @app.post('/currency/<currency_name>/rating')
@@ -103,13 +143,6 @@ def add_currency_rating(currency_name):
     database.db_session.add(obj)
     database.db_session.commit()
     return 'ok'
-
-
-
-@app.get('/test1')
-def test1():
-    task_obj = task1.apply_async(args=[1, 10, 20, 300])
-    return str(task_obj)
 
 
 @app.post('/currency/trade/<currency_name1>/<currency_name2>')
@@ -127,8 +160,7 @@ def send_trade(currency_name1, currency_name2):
 
     task_obj = task1.apply_async(args=[user_id, currency_name1,
                                        currency_name2, amount1, transaction_id])
-    return {'task_id':str(task_obj)}
-
+    return {'task_id': str(task_obj)}
 
 
 @app.teardown_appcontext

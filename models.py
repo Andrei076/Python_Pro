@@ -5,11 +5,11 @@ from sqlalchemy.orm import relationship
 
 
 class Account(Base):
-    __tablename__ = "Account"
+    __tablename__ = "account"
 
     id = Column(Integer, primary_key=True, autoincrement=True,
                    nullable=False, unique=True)
-    user_id = Column(Integer, nullable=False)
+    user_id = Column(Text, nullable=False)
     balance = Column(REAL, nullable=False)
     name = Column(String(20), nullable=False)
 
@@ -23,7 +23,7 @@ class Account(Base):
 
 
 class Currency(Base):
-    __tablename__ = "Currency"
+    __tablename__ = "currency"
 
     id = Column(Integer, primary_key=True, autoincrement=True,
                    nullable=False, unique=True)
@@ -43,7 +43,7 @@ class Currency(Base):
 
 
 class Rating(Base):
-    __tablename__ = "Rating"
+    __tablename__ = "rating"
 
     id = Column(Integer, nullable=False, primary_key=True,
                    autoincrement=True, unique=True)
@@ -61,11 +61,11 @@ class Rating(Base):
 
 
 class Trannsaction(Base):
-    __tablename__ = "Trannsaction"
+    __tablename__ = "trannsaction"
 
     id = Column(Integer, nullable=False, primary_key=True,
                    autoincrement=True)
-    user_id = Column(Integer, nullable=False)
+    user_id = Column(Text, nullable=False)
     type_transaction = Column(String(30), nullable=False)
     amount_spent_cur = Column(REAL, nullable=False)
     amount_received_cur = Column(REAL, nullable=False)
@@ -93,7 +93,7 @@ class Trannsaction(Base):
 
 
 class User(Base):
-    __tablename__ = "User"
+    __tablename__ = "user"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     login = Column(Text, nullable=False, unique=True)
@@ -108,7 +108,7 @@ class User(Base):
 
 
 class TransactionQueue(Base):
-    __tablename__ = "TransactionQueue"
+    __tablename__ = "transactionQueue"
 
     id = Column(Integer, primary_key=True, nullable=False)
     transaction_id = Column(String(50), nullable=False)
